@@ -67,7 +67,7 @@ function initHell() {
     
     const msg = document.getElementById('msg');
     const overlay = document.getElementById('clickOverlay');
-    const texts = ['YOU ARE AN IDIOT!', 'STOP BEING A CREEP!', 'YOUR IP IS LOGGED!', 'FBI WATCHING!', 'NICE TRY PERVERT!', 'HAHAHAHA LOSER!'];
+    const texts = ['nerd'];
     let i = 0;
     setInterval(() => {
         msg.textContent = texts[i++ % texts.length];
@@ -89,7 +89,7 @@ function initHell() {
     // Spawn emoji faces
     for (let j = 0; j < 25; j++) {
         const f = document.createElement('div');
-        f.textContent = '🤪';
+        f.textContent = '💔';
         f.style.cssText = `position:fixed;font-size:80px;left:${Math.random()*100}%;top:${Math.random()*100}%;animation:spin 0.5s infinite linear;pointer-events:none`;
         document.body.appendChild(f);
     }
@@ -109,7 +109,7 @@ function initHell() {
     // Back button trap
     for (let j = 0; j < 50; j++) history.pushState(0, 0, '');
     window.onpopstate = () => { history.go(1); spawnWindow(); };
-    window.onbeforeunload = () => "Are you an idiot?";
+    window.onbeforeunload = () => "damn u really are that dumb";
     
     // Vibrate mobile
     function vib() {
